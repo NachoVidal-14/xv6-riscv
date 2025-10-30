@@ -20,6 +20,18 @@ static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
 
+// Para Tarea 2
+// *** LOTTERY: Generador de números pseudo-aleatorios ***
+static unsigned long randseed = 1;
+
+unsigned long
+random(void)
+{
+  randseed = randseed * 1103515245 + 12345;
+  return (randseed / 65536) % 32768;
+}
+// *** FIN LOTTERY ***
+
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
 // memory model when using p->parent.
@@ -124,6 +136,12 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+
+  // Para Tarea 2
+  // *** LOTTERY: Inicializar tickets y run_slices ***
+  p->tickets = 100;      // Por defecto 100 tickets
+  p->run_slices = 0;     // Contador en 0
+  // *** FIN LOTTERY ***
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -414,10 +432,12 @@ kwait(uint64 addr)
   }
 }
 
+// Para Tarea 2
+// *** LOTTERY: Scheduler con Lottery Scheduling ***
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
-//  - choose a process to run.
+//  - choose a process to run via lottery.
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
@@ -426,41 +446,67 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-
+  
   c->proc = 0;
   for(;;){
-    // The most recent process to run may have had interrupts
-    // turned off; enable them to avoid a deadlock if all
-    // processes are waiting. Then turn them back off
-    // to avoid a possible race between an interrupt
-    // and wfi.
+    // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-    intr_off();
 
-    int found = 0;
+    // ===== LOTTERY SCHEDULING =====
+    
+    // 1. Calcular el total de tickets de procesos RUNNABLE
+    int total_tickets = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
+        total_tickets += p->tickets;
       }
       release(&p->lock);
     }
-    if(found == 0) {
-      // nothing to run; stop running on this core until an interrupt.
+    
+    // 2. Si no hay tickets (ningún proceso RUNNABLE), continuar
+    if(total_tickets == 0) {
+      intr_off();
       asm volatile("wfi");
+      continue;
+    }
+    
+    // 3. Generar número aleatorio entre 1 y total_tickets
+    int winner = (random() % total_tickets) + 1;
+    
+    // 4. Seleccionar el proceso ganador
+    int accumulator = 0;
+    for(p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      
+      if(p->state == RUNNABLE) {
+        accumulator += p->tickets;
+        
+        // Si este proceso es el ganador
+        if(accumulator >= winner) {
+          // Cambiar estado a RUNNING
+          p->state = RUNNING;
+          c->proc = p;
+          
+          // Incrementar contador de ejecuciones (contabilidad)
+          p->run_slices++;
+          
+          // Cambiar a este proceso
+          swtch(&c->context, &p->context);
+          
+          // El proceso ya no está corriendo
+          c->proc = 0;
+          
+          release(&p->lock);
+          break;  // Salir del loop y comenzar nueva lotería
+        }
+      }
+      
+      release(&p->lock);
     }
   }
 }
+// *** FIN LOTTERY SCHEDULER ***
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
@@ -658,6 +704,28 @@ either_copyin(void *dst, int user_src, uint64 src, uint64 len)
     return 0;
   }
 }
+
+// Para Tarea 2
+// *** LOTTERY: Función para imprimir estadísticas de procesos ***
+void
+printprocstats(void)
+{
+  struct proc *p;
+  
+  printf("\n=== Process Statistics ===\n");
+  printf("PID\tNAME\t\tTICKETS\tRUN_SLICES\tSTATE\n");
+  
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->state != UNUSED){
+      printf("%d\t%s\t\t%d\t%d\t\t%d\n", 
+             p->pid, p->name, p->tickets, p->run_slices, p->state);
+    }
+    release(&p->lock);
+  }
+  printf("==========================\n\n");
+}
+// *** FIN LOTTERY ***
 
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.

@@ -107,3 +107,28 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+
+// Para tarea 2
+
+uint64
+sys_settickets(void)
+{
+  int n;
+  
+  // Obtener el argumento de la syscall
+  argint(0, &n);
+  
+  // Validar: si n < 1, asignar 1
+  if(n < 1)
+    n = 1;
+  
+  // Asignar los tickets al proceso actual
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  p->tickets = n;
+  release(&p->lock);
+  
+  return 0;
+}

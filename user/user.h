@@ -25,6 +25,9 @@ char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
 
+// Para tarea 2
+int settickets(int);
+
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
