@@ -84,6 +84,7 @@ Process 0: PID=4, Tickets=50 - Finished work
 
 All processes completed!
 ```
+**Nota:** Existe una screenshot en el repositorio que muestra el OUTPUT explícito.
 
 **Análisis:**
 - ✅ Procesos con 400-500 tickets terminan PRIMERO
