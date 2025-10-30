@@ -280,6 +280,11 @@ PrPocrPeProcrPrsePros 8: PcIeDPsPoroococesesccess...
 
 **Solución:** Descubrimos que está en `proc.h`, no en `proc.c`. Una vez identificado el archivo correcto, agregamos los campos sin problemas.
 
+### Dificultad 5: Nombre de Funciones
+**Problema:** Un gato se subio al computador y cambio el nombre de una funcion impidiendo el funcionamiento correcto del codigo
+
+**Solución:** Buscar exhaustivamente el error y restaurar el nombre a su estado original.
+
 ---
 
 ## 4. Posibles Problemas de Lottery Scheduling
