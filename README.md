@@ -268,9 +268,9 @@ PrPocrPeProcrPrsePros 8: PcIeDPsPoroococesesccess...
 **Solución:** Investigamos y entendimos que esto NO es un error, sino comportamiento esperado en un sistema con concurrencia real. Los 10 procesos intentan imprimir simultáneamente y sus salidas se entrelazan porque no hay sincronización entre los `printf()`. Los procesos se interrumpen entre sí antes de completar sus prints. Lo importante es verificar que las líneas de "Finished work" muestran la tendencia correcta (más tickets → termina antes).
 
 ### Dificultad 3: Archivo README vs README.md
-**Problema:** XV6 necesita un archivo `README` (sin extensión) para construir el sistema de archivos. Al reemplazarlo con `README.md`, make qemu fallaba.
+**Problema:** XV6 necesita un archivo `README` (sin extensión) para construir el sistema de archivos. Al eliminarlo y reemplazarlo con `README.md`, make qemu fallaba.
 
-**Solución:** Mantuvimos el `README` original de XV6 y creamos nuestro informe como `INFORME.md` para evitar conflictos.
+**Solución:** Mantuvimos el `README` original de XV6 y creamos nuestro informe como `README.md` aparte para evitar conflictos.
 
 ### Dificultad 4: Ubicación del struct proc
 **Problema:** Inicialmente buscamos `struct proc` en `proc.c` pero no lo encontramos.
