@@ -15,7 +15,10 @@ Lottery Scheduling es un algoritmo de planificación probabilístico donde cada 
 
 ### Lógica del Algoritmo
 
+(Mostraremos pesudo código para facilitar su comprensión, si se quiere ver la modificación completa revisar los archivos modificados)
+
 Nuestro scheduler funciona en 4 pasos simples:
+
 
 **1. Contar tickets totales:**
 ```c
