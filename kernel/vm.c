@@ -484,3 +484,100 @@ ismapped(pagetable_t pagetable, uint64 va)
   }
   return 0;
 }
+
+//tarea 3
+// AGREGAR AL FINAL DE kernel/vm.c
+
+// Proteger páginas contra lectura (quitar permiso de lectura)
+// Retorna 0 en éxito, -1 en error
+int
+mrdprotect(void *addr, int len)
+{
+  struct proc *p = myproc();
+  uint64 va = (uint64)addr;
+  pte_t *pte;
+  
+  // Validación 1: dirección debe estar alineada a página
+  if(va % PGSIZE != 0)
+    return -1;
+  
+  // Validación 2: len debe ser positivo
+  if(len <= 0)
+    return -1;
+  
+  // Validación 3: dirección debe estar en espacio de usuario
+  if(va >= MAXVA)
+    return -1;
+  
+  // Validación 4: el rango completo debe estar dentro del espacio del proceso
+  if(va + (len * PGSIZE) > p->sz)
+    return -1;
+  
+  // Recorrer cada página y modificar el bit PTE_R
+  for(int i = 0; i < len; i++) {
+    uint64 current_va = va + (i * PGSIZE);
+    
+    // Obtener el PTE para esta dirección virtual
+    // walk() navega la tabla de páginas y retorna el PTE
+    // El tercer parámetro (0) indica que NO debe crear nuevos PTEs
+    pte = walk(p->pagetable, current_va, 0);
+    
+    // Validación 5: el PTE debe existir (la página debe estar mapeada)
+    if(pte == 0)
+      return -1;
+    
+    // Validación 6: debe ser una página válida (PTE_V) y de usuario (PTE_U)
+    if((*pte & PTE_V) == 0 || (*pte & PTE_U) == 0)
+      return -1;
+    
+    // CRÍTICO: Limpiar el bit PTE_R (quitar permiso de lectura)
+    // El operador & con ~PTE_R pone el bit de lectura en 0
+    // Mantener todos los demás bits intactos (W, X, U, V, etc.)
+    *pte = *pte & ~PTE_R;
+  }
+  
+  return 0;
+}
+
+// Restaurar permiso de lectura en páginas protegidas
+// Retorna 0 en éxito, -1 en error
+int
+munrdprotect(void *addr, int len)
+{
+  struct proc *p = myproc();
+  uint64 va = (uint64)addr;
+  pte_t *pte;
+  
+  // Validaciones idénticas a mrdprotect
+  if(va % PGSIZE != 0)
+    return -1;
+  
+  if(len <= 0)
+    return -1;
+  
+  if(va >= MAXVA)
+    return -1;
+  
+  if(va + (len * PGSIZE) > p->sz)
+    return -1;
+  
+  // Recorrer cada página y restaurar el bit PTE_R
+  for(int i = 0; i < len; i++) {
+    uint64 current_va = va + (i * PGSIZE);
+    
+    // Obtener el PTE para esta dirección virtual
+    pte = walk(p->pagetable, current_va, 0);
+    
+    if(pte == 0)
+      return -1;
+    
+    if((*pte & PTE_V) == 0 || (*pte & PTE_U) == 0)
+      return -1;
+    
+    // CRÍTICO: Activar el bit PTE_R (restaurar permiso de lectura)
+    // El operador | con PTE_R pone el bit de lectura en 1
+    *pte = *pte | PTE_R;
+  }
+  
+  return 0;
+}

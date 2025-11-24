@@ -42,3 +42,7 @@ entry("getpid");
 entry("sbrk");
 entry("pause");
 entry("uptime");
+
+# tarea 3
+entry("mrdprotect");
+entry("munrdprotect");

@@ -107,3 +107,41 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// AGREGAR AL FINAL DE kernel/sysproc.c
+
+uint64
+sys_mrdprotect(void)
+{
+  uint64 addr;
+  int len;
+  
+  // Obtener primer argumento: dirección (puntero)
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  
+  // Obtener segundo argumento: longitud (entero)
+  if(argint(1, &len) < 0)
+    return -1;
+  
+  // Llamar a la función real implementada en vm.c
+  return mrdprotect((void*)addr, len);
+}
+
+uint64
+sys_munrdprotect(void)
+{
+  uint64 addr;
+  int len;
+  
+  // Obtener primer argumento: dirección (puntero)
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  
+  // Obtener segundo argumento: longitud (entero)
+  if(argint(1, &len) < 0)
+    return -1;
+  
+  // Llamar a la función real implementada en vm.c
+  return munrdprotect((void*)addr, len);
+}

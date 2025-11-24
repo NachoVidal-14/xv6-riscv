@@ -24,6 +24,10 @@ int getpid(void);
 char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
+//tarea 3
+int mrdprotect(void *addr, int len);
+int munrdprotect(void *addr, int len);
+
 
 // ulib.c
 int stat(const char*, struct stat*);
